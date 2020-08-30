@@ -1,0 +1,1 @@
+{"fields":[{"name":"Nama","format":"","type":""},{"name":"Tanggal","format":"YYYY-M-D","type":"date"},{"name":"Latitude","format":"","type":"real"},{"name":"Longitude","format":"","type":"real"},{"name":"Amp","format":"","type":""},{"name":"Teg","format":"","type":""},{"name":"MW","format":"","type":"real"},{"name":"Cuaca","format":"","type":""}],"rows":null}
