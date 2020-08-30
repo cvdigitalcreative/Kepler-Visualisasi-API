@@ -35,28 +35,10 @@ $app->post('/save/', function ($request, $response, $args) {
     $jsonfinal['fields'][7]['format'] = "";
     $jsonfinal['fields'][7]['type'] = "";
     
-    $filename = "../src/file/" . time() . ".json";
+    $filename = "./files/" . time() . ".json";
     $jsonhasil = json_decode($data['jsondata'],true);
     $jsonfinal['rows'] = $jsonhasil;
-    // var_dump($json);
-    // $jsonfinal = [];
-    // $j = 0 ;
-    
-    // $myfile1 = fopen("./files/1597630910.json", "r") or die("Unable to open file!");
-    // $myfilee = fread($myfile1,filesize("./files/1597630910.json"));
-    
-    // $myfile = json_decode($myfilee,true);
-    
-    // for ($i=12; $i < count($myfile); $i+8) { 
-    //     if (count($myfile[$i][3] > 10)) {
-    //         for ($j=5; $j < count($myfile[$i]); $j++) { 
-    //             // $jsonfinal['rows'][]            
-    //         }
-    //     }
-    // }
-    // var_dump($jsonfinal);
-    // fclose($myfile1);
-    $myfile = fopen("../".$filename, "w") or die("Unable to open file!");
+    $myfile = fopen($filename, "w") or die("Unable to open file!");
     fwrite($myfile, json_encode($jsonfinal));
     fclose($myfile);
     $nama = $data['nama'];
@@ -99,8 +81,8 @@ $app->get('/data/{id}', function ($request, $response, $args) {
     $est->execute();
     $path = $est->fetch();
     // var_dump($path);
-    $myfile1 = fopen("../".$path['path'] , "r") or die("Unable to open file!");
-    $myfilee = fread($myfile1,filesize("../".$path['path']));
+    $myfile1 = fopen($path['path'] , "r") or die("Unable to open file!");
+    $myfilee = fread($myfile1,filesize($path['path']));
     $myfile = json_decode($myfilee,true);
     return $response->withJson(($myfile),200);
 });
