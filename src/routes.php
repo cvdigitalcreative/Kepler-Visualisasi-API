@@ -34,6 +34,9 @@ $app->post('/save/', function ($request, $response, $args) {
     $jsonfinal['fields'][7]['name'] = "Cuaca";
     $jsonfinal['fields'][7]['format'] = "";
     $jsonfinal['fields'][7]['type'] = "";
+    $jsonfinal['fields'][8]['name'] = "Kecamatan";
+    $jsonfinal['fields'][8]['format'] = "";
+    $jsonfinal['fields'][8]['type'] = "";
     
     $filename = "./files/" . time() . ".json";
     $jsonhasil = json_decode($data['jsondata'],true);
@@ -48,6 +51,76 @@ $app->post('/save/', function ($request, $response, $args) {
     $est->execute();
 
     return $response->withJson(['status' => 'Success', 'message' => 'Berhasil upload excel data'],200);
+});
+
+$app->post('/upload/html/{id}', function ($request, $response, $args) {
+    $data = $args['id'];
+    $uploadedFiles = $request->getUploadedFiles();
+    $uploadedFile = $uploadedFiles['file'];
+    if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
+        $extension = pathinfo($uploadedFile->getClientFilename(), PATHINFO_EXTENSION);
+        if ($extension != "html" && $extension != "HTML") {
+            return $response->withJson(['status' => 'Error', 'message' => 'Format File Harus HTML'], 200);
+        }
+        $sql = "SELECT * FROM data_excel
+        WHERE id = '$data'";
+        $est = $this->db->prepare($sql);
+        $est->execute();
+        $path = $est->fetch();
+        if (!empty($path['html_path'])) {
+            unlink($path['html_path']);
+        }
+        $filename = md5($uploadedFile->getClientFilename()) . time() . $uploadedFile->getClientFilename() ;
+        $directory = "./files/";
+        if (!is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+        $uploadedFile->moveTo($directory . DIRECTORY_SEPARATOR . $filename);
+        $path_name = "./files/" . $filename;
+        $sql = "UPDATE data_excel
+            SET html_path = '$path_name'
+            WHERE id = '$data' ";
+        $est = $this->db->prepare($sql);
+        
+        if($est->execute()){
+            return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Upload Data'],200);
+        }
+    }
+    return $response->withJson(['status' => 'Error', 'message' => 'Gagal Upload Data'],400);
+});
+
+$app->get('/list/data/html/', function ($request, $response) {
+    $sql = "SELECT * FROM data_excel";
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    $data = $est->fetchAll();
+    $final = [];
+    $j = 0;
+    for ($i=0; $i < count($data); $i++) { 
+        if (!empty($data[$i]['html_path'])) {
+            $final[$j] = $data[$i];
+            $j++;
+        }
+    }
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $final],200);
+});
+
+$app->delete('/delete/data/{id}', function ($request, $response, $args) {
+    $id = $args['id']; 
+    $sql = "SELECT * FROM data_excel
+    WHERE id = '$id'";
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    $path = $est->fetch();
+    unlink($path['html_path']);
+    unlink($path['path']);
+    $sql = "DELETE FROM data_excel
+            WHERE id = '$id'";
+    $est = $this->db->prepare($sql);
+    if($est->execute()){   
+        return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Menghapus Data'],200);
+    }
+    return $response->withJson(['status' => 'Error', 'message' => 'Gagal Menghapus Data'],400);
 });
 
 $app->get('/list/data/', function ($request, $response) {
@@ -72,6 +145,15 @@ $app->post('/admin/login/', function ($request, $response) {
     return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Login'],200);
 });
 
+$app->get('/data/html/{id}', function ($request, $response, $args) {
+    $data = $args['id'];
+    $sql = "SELECT * FROM data_excel
+            WHERE id = '$data'";
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    $path = $est->fetch();
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $path['html_path']],200);
+});
 
 $app->get('/data/{id}', function ($request, $response, $args) {
     $data = $args['id'];
@@ -80,7 +162,6 @@ $app->get('/data/{id}', function ($request, $response, $args) {
     $est = $this->db->prepare($sql);
     $est->execute();
     $path = $est->fetch();
-    // var_dump($path);
     $myfile1 = fopen($path['path'] , "r") or die("Unable to open file!");
     $myfilee = fread($myfile1,filesize($path['path']));
     $myfile = json_decode($myfilee,true);
