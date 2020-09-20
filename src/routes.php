@@ -2,10 +2,7 @@
 
 $app->post('/save/', function ($request, $response, $args) {
     $data = $request->getParsedBody();
-    if (empty($data['jsondata'])) {
-        return $response->withJson(['status' => 'Error', 'message' => 'Gagal upload excel data'],200);
-    }
-    if (empty($data['nama'])) {
+    if (empty($data['jsondata'])||empty($data['nama'])||empty($data['bulan'])||empty($data['gardu'])) {
         return $response->withJson(['status' => 'Error', 'message' => 'Gagal upload excel data'],200);
     }
     // ini_set('memory_limit','-1');
@@ -45,8 +42,10 @@ $app->post('/save/', function ($request, $response, $args) {
     fwrite($myfile, json_encode($jsonfinal));
     fclose($myfile);
     $nama = $data['nama'];
-    $sql = "INSERT INTO data_excel (nama, path)
-                VALUES ('$nama', '$filename')";
+    $gardu = $data['gardu'];
+    $bulan = $data['bulan'];
+    $sql = "INSERT INTO data_excel (nama, path, gardu, bulan)
+                VALUES ('$nama', '$filename', '$gardu', '$bulan')";
     $est = $this->db->prepare($sql);
     $est->execute();
 
@@ -123,8 +122,65 @@ $app->delete('/delete/data/{id}', function ($request, $response, $args) {
     return $response->withJson(['status' => 'Error', 'message' => 'Gagal Menghapus Data'],400);
 });
 
+$app->get('/data/', function ($request, $response) {
+    $gardu = $request->getQueryParams('gardu');
+    $bulan = $request->getQueryParams('bulan');
+    $sql = "";
+    $gardu = $gardu['gardu'];
+    $bulan = $bulan['bulan'];
+    
+    if (($gardu==0)&&($bulan==0)) {
+        $sql = "SELECT data_excel.id, data_excel.nama, data_excel.path, data_excel.html_path, gardu.gardu, bulan.bulan FROM data_excel
+        INNER JOIN gardu ON gardu.id = data_excel.gardu
+        INNER JOIN bulan ON bulan.id = data_excel.bulan";
+    }else{
+
+        if (!empty($gardu) && $bulan==0) {
+            $sql = "SELECT data_excel.id, data_excel.nama, data_excel.path, data_excel.html_path, gardu.gardu, bulan.bulan FROM data_excel
+            INNER JOIN gardu ON gardu.id = data_excel.gardu
+            INNER JOIN bulan ON bulan.id = data_excel.bulan
+                    WHERE data_excel.gardu = '$gardu'";
+        }
+        if (!empty($bulan) && $gardu==0) {
+            $sql = "SELECT data_excel.id, data_excel.nama, data_excel.path, data_excel.html_path, gardu.gardu, bulan.bulan FROM data_excel
+            INNER JOIN gardu ON gardu.id = data_excel.gardu
+            INNER JOIN bulan ON bulan.id = data_excel.bulan
+                    WHERE data_excel.bulan = '$bulan'";
+        }
+        if (!empty($gardu)&&!empty($bulan)) {
+            $sql = "SELECT data_excel.id, data_excel.nama, data_excel.path, data_excel.html_path, gardu.gardu, bulan.bulan FROM data_excel
+            INNER JOIN gardu ON gardu.id = data_excel.gardu
+            INNER JOIN bulan ON bulan.id = data_excel.bulan
+                    WHERE data_excel.gardu = '$gardu' AND data_excel.bulan = '$bulan'";
+        }
+}
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()],200);
+});
+
 $app->get('/list/data/', function ($request, $response) {
+   
     $sql = "SELECT * FROM data_excel";
+    
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()],200);
+});
+
+$app->get('/data/bulan/', function ($request, $response) {
+   
+    $sql = "SELECT * FROM bulan";
+    
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()],200);
+});
+
+$app->get('/data/gardu/', function ($request, $response) {
+   
+    $sql = "SELECT * FROM gardu";
+    
     $est = $this->db->prepare($sql);
     $est->execute();
     return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()],200);
