@@ -183,6 +183,15 @@ $app->get('/data/bulan/', function ($request, $response) {
     return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()], 200);
 });
 
+$app->get('/data/tahun/', function ($request, $response) {
+
+    $sql = "SELECT * FROM tahun";
+
+    $est = $this->db->prepare($sql);
+    $est->execute();
+    return $response->withJson(['status' => 'Success', 'message' => 'Berhasil Mendapatkan Data', 'data' => $est->fetchAll()], 200);
+});
+
 $app->get('/data/gardu/', function ($request, $response) {
 
     $sql = "SELECT * FROM gardu";
